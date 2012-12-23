@@ -1,0 +1,11 @@
+spawnsAllowed: 80
+reportSize: 10
+pluginEnable: true
+debug: false
+oneTimeUse: false
+warnThreshold: 0.50
+alertThreshold: 0.75
+spawnerRadiusX: 4
+spawnerRadiusY: 2
+spawnerRadiusZ: 4
+playerDistance: 17.0
