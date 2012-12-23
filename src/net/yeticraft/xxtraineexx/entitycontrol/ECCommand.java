@@ -1,12 +1,12 @@
 package net.yeticraft.xxtraineexx.entitycontrol;
 
-import java.util.*;
 import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
+import org.bukkit.Chunk;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 
 /**
  * @author XxTRAINEExX
@@ -17,16 +17,15 @@ import org.bukkit.entity.Player;
 public class ECCommand implements CommandExecutor {
 
 	private final EntityControl plugin;
-	private List<Block> topSpawners;
 
 	public ECCommand(EntityControl plugin) {
 		this.plugin = plugin;
-		topSpawners = new ArrayList<Block>(plugin.reportSize);
 	}
 
 	enum SubCommand {
 
 		HELP,
+		GO,
 		STATS,
 		TP,
 		RESETSTATS,
@@ -74,13 +73,13 @@ public class ECCommand implements CommandExecutor {
 
 				sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " HELP: Shows this help page");
 				if (sender.hasPermission("ec.stats")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " STATS: Lists current spawn stats.");
+					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " STATS: Lists current stats.");
 				}
 				if (sender.hasPermission("ec.tp")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " TP <num>: Teleport to a given spawn location.");
+					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " TP <num>: Teleport to a given location.");
 				}
 				if (sender.hasPermission("ec.resetstats")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " RESETSTATS: Clears all stats, spawners, mobs.");
+					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " RESETSTATS: Clears all stats.");
 				}
 				if (sender.hasPermission("ec.debug")) {
 					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " DEBUG: Enables DEBUG mode on the console.");
@@ -93,7 +92,7 @@ public class ECCommand implements CommandExecutor {
 				}
 				break;
 			case STATS:
-
+/*
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl Stats");
 				sender.sendMessage(ChatColor.DARK_AQUA + "=====================");
 
@@ -107,11 +106,58 @@ public class ECCommand implements CommandExecutor {
 					sender.sendMessage(ChatColor.AQUA + "Too manyparameters! Try /ec STATS");
 					return true;
 				}
-				findTopSpawners(sender);
+				findTopSpawners(sender); */
 				break;
 
-			case TP:
+			case GO:
 
+				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl GO");
+				sender.sendMessage(ChatColor.DARK_AQUA + "================");
+
+				// Check permissions for GO command
+				if (!sender.hasPermission("ec.go")) {
+					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
+					return true;
+				}
+
+				if (args.length > 1) {
+					sender.sendMessage(ChatColor.AQUA + "Too manyparameters! Try /ec GO");
+					return true;
+				}
+
+				int clearedEntities = 0;
+				
+				// Cycling through all worlds
+				for (World world : plugin.getServer().getWorlds()) { 
+					
+					// Cycling through all loaded chunks in at particular world
+					for (Chunk chunk : world.getLoadedChunks()) { 
+						
+						Entity[] entityList = chunk.getEntities();
+						
+						// Doing some work if the entity count in that chunk is too high
+						if(entityList.length > 100){
+							
+							// Cycling through all entities in the list
+							for (Entity entity : entityList){
+								
+								// If it's not alive I'm going to remove it.
+								if (!entity.getType().isAlive()){
+									entity.remove();
+									clearedEntities++;
+								}
+							}
+						}
+						sender.sendMessage(ChatColor.DARK_AQUA + "Entities Cleared: [" + clearedEntities + "]" + chunk.toString());
+					} 
+					
+				}
+				
+				break;
+
+				
+			case TP:
+/*
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl TP");
 				sender.sendMessage(ChatColor.DARK_AQUA + "==================");
 
@@ -167,10 +213,10 @@ public class ECCommand implements CommandExecutor {
 				if (plugin.debug) {
 					plugin.getLogger().info(sender.getName() + " teleported to spawner at: [" + topSpawners.get(spawnNumber).getLocation().getBlockX()
 							+ "," + topSpawners.get(spawnNumber).getLocation().getBlockY() + "," + topSpawners.get(spawnNumber).getLocation().getBlockZ() + "]");
-				}
+				}*/
 				break;
 			case RESETSTATS:
-
+/*
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl");
 				sender.sendMessage(ChatColor.DARK_AQUA + "===============");
 
@@ -189,7 +235,7 @@ public class ECCommand implements CommandExecutor {
 				plugin.myListener.activeSpawners.clear();
 				topSpawners.clear();
 				sender.sendMessage(ChatColor.AQUA + "All stats reset successfully!");
-				plugin.getLogger().info("All stats cleared from the server by " + sender.getName());
+				plugin.getLogger().info("All stats cleared from the server by " + sender.getName());*/
 				break;
 
 			case DEBUG:
@@ -280,54 +326,4 @@ public class ECCommand implements CommandExecutor {
 		return true;
 	}
 
-	/**
-	 * This method executes the spawn report and sends it to the sender.
-	 * 
-	 */
-	public void findTopSpawners(CommandSender sender) {
-		Map<Block, ECSpawner> activeSpawners = plugin.myListener.activeSpawners;
-		topSpawners.clear();
-
-		// Iterating through all spawners in the hashmap
-		Iterator<ECSpawner> it = activeSpawners.values().iterator();
-
-		// Temporary list to store the top ten spawners into
-		LinkedList<ECSpawner> templist = new LinkedList<ECSpawner>();
-
-
-		while (it.hasNext()) {
-			ECSpawner cur_spawner = it.next();
-			cur_spawner.temp_counter = cur_spawner.getMobList().size();
-			for (int i = 0; i < plugin.reportSize; i++) {
-				// If we hit the end of the list before hitting the the top n items, add this one
-				if (i >= templist.size()) {
-					templist.add(cur_spawner);
-					break;
-				}
-				// If our current item has more mobs than the current index, then we need to insert it
-				if (cur_spawner.temp_counter > templist.get(i).temp_counter) {
-					templist.add(i, cur_spawner);
-					break;
-				}
-			}
-		}
-
-		//At this point, we have at least the configured number of spawners in our linked list...
-		for (int i = 0; (i < plugin.reportSize) && (i < templist.size()); i++) {
-			ECSpawner cur_spawner = templist.get(i);
-
-			topSpawners.add(i, cur_spawner.getBlock());
-
-			if (cur_spawner.temp_counter >= (int) ((double) plugin.spawnsAllowed * plugin.alertThreshold)) {
-				sender.sendMessage(ChatColor.AQUA + "[" + i + "] " + cur_spawner.getPlayerName()
-						+ " : " + ChatColor.RED + cur_spawner.temp_counter + "/" + plugin.spawnsAllowed);
-			} else if (cur_spawner.temp_counter >= (int) ((double) plugin.spawnsAllowed * plugin.warnThreshold)) {
-				sender.sendMessage(ChatColor.AQUA + "[" + i + "] " + cur_spawner.getPlayerName()
-						+ " : " + ChatColor.YELLOW + cur_spawner.temp_counter + "/" + plugin.spawnsAllowed);
-			} else {
-				sender.sendMessage(ChatColor.AQUA + "[" + i + "] " + cur_spawner.getPlayerName()
-						+ " : " + cur_spawner.temp_counter + "/" + plugin.spawnsAllowed);
-			}
-		}
-	}
 }
