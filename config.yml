@@ -1,4 +1,4 @@
-deathBufferSeconds: 300
+deathBufferSeconds: 300.0
 entityCountPerChunk: 100
 pluginEnable: true
 debug: false

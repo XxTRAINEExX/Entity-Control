@@ -16,7 +16,7 @@ public class EntityControl extends JavaPlugin {
 
 	public FileConfiguration config;
 	public ECListener myListener;
-	public int deathBufferSeconds;
+	public long deathBufferSeconds;
 	public int entityCountPerChunk;
 	public boolean pluginEnable;
 	public boolean debug;
@@ -40,7 +40,7 @@ public class EntityControl extends JavaPlugin {
 		saveConfig();
 
 		// Assign all the local variables
-		deathBufferSeconds = config.getInt("deathBufferSeconds");
+		deathBufferSeconds = config.getLong("deathBufferSeconds");
 		entityCountPerChunk = config.getInt("entityCountPerChunk");
 		pluginEnable = config.getBoolean("pluginEnable");
 		debug = config.getBoolean("debug");

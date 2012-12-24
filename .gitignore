@@ -6,6 +6,7 @@
 /libraries
 /bin
 /lib
+.settings/
 
 # NetBeans
 build.xml

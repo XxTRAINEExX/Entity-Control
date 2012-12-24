@@ -26,7 +26,7 @@ public class ECListener implements Listener {
 		}
 		
 		Chunk chunk = e.getEntity().getLocation().getChunk();
-		playerDeaths.put(chunk.toString(), System.currentTimeMillis());
+		playerDeaths.put(chunk.getWorld().toString() + "-" + chunk.toString(), System.currentTimeMillis());
 		
 	}
 

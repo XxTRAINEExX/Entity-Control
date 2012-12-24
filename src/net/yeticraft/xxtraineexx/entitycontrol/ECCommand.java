@@ -88,7 +88,12 @@ public class ECCommand implements CommandExecutor {
 
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl GO");
 				sender.sendMessage(ChatColor.DARK_AQUA + "================");
-
+				
+				if (!plugin.pluginEnable) {
+				    sender.sendMessage(ChatColor.DARK_AQUA + "Plugin is manually disabled. Try re-enabling it!");
+		            return true; // Plugin has been manually disabled
+		        }
+				
 				// Check permissions for GO command
 				if (!sender.hasPermission("ec.go")) {
 					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
@@ -104,14 +109,16 @@ public class ECCommand implements CommandExecutor {
 				Iterator<Map.Entry<String,Long>> iter = plugin.myListener.playerDeaths.entrySet().iterator();
 				while (iter.hasNext()) {
 				    Map.Entry<String,Long> entry = iter.next();
-				    if((entry.getValue() - System.currentTimeMillis()) > (plugin.deathBufferSeconds * 1000)){
+				    				    
+				    if((System.currentTimeMillis() - entry.getValue()) > (plugin.deathBufferSeconds * 1000.0)){
 				    	
-				    	if (plugin.debug) {
-							plugin.getLogger().info("Removed death entry from: " + entry.getKey());
-							plugin.getLogger().info("Entry was [" + (entry.getValue() / 1000) + "] seconds old.");
-						}
+				    	if (plugin.debug) {plugin.getLogger().info("Removed player death from: " + entry.getKey() + ". Player died [" + ((System.currentTimeMillis() - entry.getValue()) / 1000.0) + "] seconds ago.");}
 				    	iter.remove();
+				    	continue;
 				    }
+				    
+				    if (plugin.debug) {plugin.getLogger().info("Death in: " + entry.getKey() + " kept. Player died [" + ((System.currentTimeMillis() - entry.getValue()) / 1000.0) + "] seconds ago.");}
+                    
 				}
 
 				
@@ -123,27 +130,42 @@ public class ECCommand implements CommandExecutor {
 					for (Chunk chunk : world.getLoadedChunks()) { 
 						
 						int clearedEntities = 0;
+						int keptEntities = 0;
 						Entity[] entityList = chunk.getEntities();
 						
 						// Doing some work if the entity count in that chunk is too high
-						if (entityList.length < plugin.entityCountPerChunk) continue;
-						if (plugin.myListener.playerDeaths.get(chunk.toString()) != null) continue;
+						if (entityList.length < plugin.entityCountPerChunk) {
+						    continue;
+						}
+						if (plugin.myListener.playerDeaths.get(world.toString() + "-" + chunk.toString()) != null) {
+						    if (plugin.debug){plugin.getLogger().info(world.toString() + "-" + chunk.toString() + 
+						            " has a death logged [" + ((System.currentTimeMillis() - (plugin.myListener.playerDeaths.get(world.toString() + 
+						            "-" + chunk.toString())))/1000.0) + "] seconds ago.  Skipping because it happened < " + plugin.deathBufferSeconds + " seconds ago.");}
+						    continue;
+						}
+
 						
 						// Cycling through all entities in the list
 						for (Entity entity : entityList){
 							
 							// If it's not alive I'm going to remove it.
 							if (!entity.getType().isAlive()){
-								entity.remove();
+							    entity.remove();
 								clearedEntities++;
+								continue;
 							}
 							
+	                         if (plugin.debug){plugin.getLogger().info("Chunk: " + world.toString() + "-" + chunk.toString() + 
+	                                 " Entity: " + entity.toString() + " is alive.  Skipping.");}
+	                         keptEntities++;
+	                        
 						}
-						sender.sendMessage(ChatColor.DARK_AQUA + "Entities Cleared: [" + clearedEntities + "]" + chunk.toString());
+						sender.sendMessage(ChatColor.DARK_AQUA +  world.toString() + " - " + chunk.toString() + ": Entities Cleared [" + clearedEntities + "]");
+						sender.sendMessage(ChatColor.DARK_AQUA +  world.toString() + " - " + chunk.toString() + ": Entities Kept [" + keptEntities + "]");
 					}
 				} 
 					
-				
+				sender.sendMessage(ChatColor.DARK_AQUA +  "Chunk cleanup complete.");
 				
 				break;
 
