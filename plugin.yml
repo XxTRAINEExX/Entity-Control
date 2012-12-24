@@ -1,6 +1,6 @@
 name: EntityControl
 main: net.yeticraft.xxtraineexx.entitycontrol.EntityControl
-version: 1.0
+version: 1.2
 authors: [XxTRAINEExX]
 
 commands:

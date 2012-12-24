@@ -109,19 +109,16 @@ public class ECCommand implements CommandExecutor {
 				Iterator<Map.Entry<String,Long>> iter = plugin.myListener.playerDeaths.entrySet().iterator();
 				while (iter.hasNext()) {
 				    Map.Entry<String,Long> entry = iter.next();
-				    				    
-				    if((System.currentTimeMillis() - entry.getValue()) > (plugin.deathBufferSeconds * 1000.0)){
-				    	
-				    	if (plugin.debug) {plugin.getLogger().info("Removed player death from: " + entry.getKey() + ". Player died [" + ((System.currentTimeMillis() - entry.getValue()) / 1000.0) + "] seconds ago.");}
+				    long deathTime = entry.getValue();
+				    String deathChunk = entry.getKey();
+				    if((System.currentTimeMillis() - deathTime) > (plugin.deathBufferSeconds * 1000.0)){
+				    	if (plugin.debug) {plugin.getLogger().info("Removed player death from: " + deathChunk + ". Player died [" + ((System.currentTimeMillis() - deathTime) / 1000.0) + "] seconds ago.");}
 				    	iter.remove();
 				    	continue;
 				    }
-				    
-				    if (plugin.debug) {plugin.getLogger().info("Death in: " + entry.getKey() + " kept. Player died [" + ((System.currentTimeMillis() - entry.getValue()) / 1000.0) + "] seconds ago.");}
-                    
-				}
+				    if (plugin.debug) {plugin.getLogger().info("Death in: " + deathChunk + " kept. Player died [" + ((System.currentTimeMillis() - deathTime) / 1000.0) + "] seconds ago.");}
+                }
 
-				
 				
 				// Cycling through all worlds
 				for (World world : plugin.getServer().getWorlds()) { 
@@ -131,16 +128,17 @@ public class ECCommand implements CommandExecutor {
 						
 						int clearedEntities = 0;
 						int keptEntities = 0;
+						String currentChunk = world.toString() + "-" + chunk.toString();
 						Entity[] entityList = chunk.getEntities();
 						
 						// Doing some work if the entity count in that chunk is too high
 						if (entityList.length < plugin.entityCountPerChunk) {
 						    continue;
 						}
-						if (plugin.myListener.playerDeaths.get(world.toString() + "-" + chunk.toString()) != null) {
-						    if (plugin.debug){plugin.getLogger().info(world.toString() + "-" + chunk.toString() + 
-						            " has a death logged [" + ((System.currentTimeMillis() - (plugin.myListener.playerDeaths.get(world.toString() + 
-						            "-" + chunk.toString())))/1000.0) + "] seconds ago.  Skipping because it happened < " + plugin.deathBufferSeconds + " seconds ago.");}
+						if (plugin.myListener.playerDeaths.get(currentChunk) != null) {
+						    long deathInChunk = plugin.myListener.playerDeaths.get(currentChunk);
+	                        if (plugin.debug){plugin.getLogger().info(currentChunk + 
+						            " has a death logged [" + ((System.currentTimeMillis() - deathInChunk)/1000.0) + "] seconds ago.  Skipping because it happened < " + plugin.deathBufferSeconds + " seconds ago.");}
 						    continue;
 						}
 
