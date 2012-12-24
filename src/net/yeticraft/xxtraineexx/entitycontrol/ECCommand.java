@@ -1,5 +1,8 @@
 package net.yeticraft.xxtraineexx.entitycontrol;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -26,9 +29,6 @@ public class ECCommand implements CommandExecutor {
 
 		HELP,
 		GO,
-		STATS,
-		TP,
-		RESETSTATS,
 		DEBUG,
 		RELOAD,
 		TOGGLE,
@@ -61,7 +61,6 @@ public class ECCommand implements CommandExecutor {
 			return true;
 		}
 
-
 		switch (SubCommand.toSubCommand(args[0])) {
 			case HELP:
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl Help");
@@ -72,14 +71,8 @@ public class ECCommand implements CommandExecutor {
 				}
 
 				sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " HELP: Shows this help page");
-				if (sender.hasPermission("ec.stats")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " STATS: Lists current stats.");
-				}
-				if (sender.hasPermission("ec.tp")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " TP <num>: Teleport to a given location.");
-				}
-				if (sender.hasPermission("ec.resetstats")) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " RESETSTATS: Clears all stats.");
+				if (sender.hasPermission("ec.go")) {
+					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " GO: Executes Chunk Cleanup.");
 				}
 				if (sender.hasPermission("ec.debug")) {
 					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " DEBUG: Enables DEBUG mode on the console.");
@@ -91,24 +84,6 @@ public class ECCommand implements CommandExecutor {
 					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " TOGGLE: Enables/Disables the plugin.");
 				}
 				break;
-			case STATS:
-/*
-				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl Stats");
-				sender.sendMessage(ChatColor.DARK_AQUA + "=====================");
-
-				// Check permissions for STATS command
-				if (!sender.hasPermission("ec.stats")) {
-					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
-					return true;
-				}
-
-				if (args.length > 1) {
-					sender.sendMessage(ChatColor.AQUA + "Too manyparameters! Try /ec STATS");
-					return true;
-				}
-				findTopSpawners(sender); */
-				break;
-
 			case GO:
 
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl GO");
@@ -125,7 +100,21 @@ public class ECCommand implements CommandExecutor {
 					return true;
 				}
 
-				int clearedEntities = 0;
+				// Check current playerDeaths MAP and remove any old entries
+				Iterator<Map.Entry<String,Long>> iter = plugin.myListener.playerDeaths.entrySet().iterator();
+				while (iter.hasNext()) {
+				    Map.Entry<String,Long> entry = iter.next();
+				    if((entry.getValue() - System.currentTimeMillis()) > (plugin.deathBufferSeconds * 1000)){
+				    	
+				    	if (plugin.debug) {
+							plugin.getLogger().info("Removed death entry from: " + entry.getKey());
+							plugin.getLogger().info("Entry was [" + (entry.getValue() / 1000) + "] seconds old.");
+						}
+				    	iter.remove();
+				    }
+				}
+
+				
 				
 				// Cycling through all worlds
 				for (World world : plugin.getServer().getWorlds()) { 
@@ -133,117 +122,38 @@ public class ECCommand implements CommandExecutor {
 					// Cycling through all loaded chunks in at particular world
 					for (Chunk chunk : world.getLoadedChunks()) { 
 						
+						int clearedEntities = 0;
 						Entity[] entityList = chunk.getEntities();
 						
 						// Doing some work if the entity count in that chunk is too high
-						if(entityList.length > 100){
+						if (entityList.length < plugin.entityCountPerChunk) continue;
+						if (plugin.myListener.playerDeaths.get(chunk.toString()) != null) continue;
+						
+						// Cycling through all entities in the list
+						for (Entity entity : entityList){
 							
-							// Cycling through all entities in the list
-							for (Entity entity : entityList){
-								
-								// If it's not alive I'm going to remove it.
-								if (!entity.getType().isAlive()){
-									entity.remove();
-									clearedEntities++;
-								}
+							// If it's not alive I'm going to remove it.
+							if (!entity.getType().isAlive()){
+								entity.remove();
+								clearedEntities++;
 							}
+							
 						}
 						sender.sendMessage(ChatColor.DARK_AQUA + "Entities Cleared: [" + clearedEntities + "]" + chunk.toString());
-					} 
+					}
+				} 
 					
-				}
+				
 				
 				break;
 
 				
-			case TP:
-/*
-				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl TP");
-				sender.sendMessage(ChatColor.DARK_AQUA + "==================");
-
-				// Not going to allow TP for the console
-				if (!(sender instanceof Player)) {
-					sender.sendMessage(ChatColor.DARK_AQUA + "How do you expect to teleport from a console?");
-					return true;
-				}
-
-				// Check permissions for TP command
-				if (!sender.hasPermission("ec.tp")) {
-					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
-					return true;
-				}
-
-				// Did they type too many parameters?
-				if (args.length > 2) {
-					sender.sendMessage(ChatColor.AQUA + "Too manyparameters! Try /ec TP");
-					return true;
-				}
-
-				// Did they only type 1 parameter?
-				if (args.length == 1) {
-					sender.sendMessage(ChatColor.AQUA + " /" + command.getName() + " TP <type> <num>: Teleport to a given stat location.");
-					sender.sendMessage(ChatColor.AQUA + "<num> :  Number pulled from the STATS list.");
-					return true;
-				}
-
-				// Determing if they actually entered a number (Not a string)
-				int spawnNumber;
-				try {
-					spawnNumber = Integer.parseInt(args[1]);
-				} catch (NumberFormatException e) {
-					sender.sendMessage(ChatColor.AQUA + "You did not enter a valid NUMBER");
-					return true;
-				}
-
-				// Making sure they entered a valid number in the hashmap
-				if ((spawnNumber >= topSpawners.size())
-						|| (spawnNumber < 0)) {
-					sender.sendMessage(ChatColor.AQUA + "You did not enter a valid NUMBER from the STATS command. Rerun STATS and verify your entry.");
-					return true;
-				}
-				if (topSpawners.get(spawnNumber) == null) {
-					sender.sendMessage(ChatColor.AQUA + "You did not enter a valid NUMBER from the STATS command. Rerun STATS and verify your entry.");
-					return true;
-				}
-
-				// Teleport player to spawner
-				Player player = (Player) sender; // Cast already checked near beginning of command handler
-				player.teleport(topSpawners.get(spawnNumber).getLocation());
-				sender.sendMessage(ChatColor.AQUA + "Teleporting you to spawner #" + spawnNumber);
-				if (plugin.debug) {
-					plugin.getLogger().info(sender.getName() + " teleported to spawner at: [" + topSpawners.get(spawnNumber).getLocation().getBlockX()
-							+ "," + topSpawners.get(spawnNumber).getLocation().getBlockY() + "," + topSpawners.get(spawnNumber).getLocation().getBlockZ() + "]");
-				}*/
-				break;
-			case RESETSTATS:
-/*
-				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl");
-				sender.sendMessage(ChatColor.DARK_AQUA + "===============");
-
-				// Check permissions for STATS command
-				if (!sender.hasPermission("ec.resetstats")) {
-					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
-					return true;
-				}
-
-				if (args.length > 1) {
-					sender.sendMessage(ChatColor.AQUA + "Too manyparameters! Try /ec RESETSTATS");
-					return true;
-				}
-
-				plugin.myListener.activeMobs.clear();
-				plugin.myListener.activeSpawners.clear();
-				topSpawners.clear();
-				sender.sendMessage(ChatColor.AQUA + "All stats reset successfully!");
-				plugin.getLogger().info("All stats cleared from the server by " + sender.getName());*/
-				break;
-
 			case DEBUG:
 
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl");
 				sender.sendMessage(ChatColor.DARK_AQUA + "===============");
 
-				// Check permissions for STATS command
+				// Check permissions for DEBUG command
 				if (!sender.hasPermission("ec.debug")) {
 					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
 					return true;
@@ -270,7 +180,7 @@ public class ECCommand implements CommandExecutor {
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl");
 				sender.sendMessage(ChatColor.DARK_AQUA + "===============");
 
-				// Check permissions for STATS command
+				// Check permissions for RELOAD command
 				if (!sender.hasPermission("ec.reload")) {
 					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
 					return true;
@@ -295,7 +205,7 @@ public class ECCommand implements CommandExecutor {
 				sender.sendMessage(ChatColor.DARK_AQUA + "EntityControl");
 				sender.sendMessage(ChatColor.DARK_AQUA + "===============");
 
-				// Check permissions for STATS command
+				// Check permissions for TOGGLE command
 				if (!sender.hasPermission("ec.toggle")) {
 					sender.sendMessage(ChatColor.DARK_AQUA + "Permissions DENIED.");
 					return true;

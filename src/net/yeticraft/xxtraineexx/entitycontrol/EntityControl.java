@@ -16,18 +16,11 @@ public class EntityControl extends JavaPlugin {
 
 	public FileConfiguration config;
 	public ECListener myListener;
-	public int spawnsAllowed;
-	public int reportSize;
+	public int deathBufferSeconds;
+	public int entityCountPerChunk;
 	public boolean pluginEnable;
 	public boolean debug;
-	public boolean oneTimeUse;
-	public double warnThreshold;
-	public double alertThreshold;
-	public int spawnerRadiusX;
-	public int spawnerRadiusY;
-	public int spawnerRadiusZ;
-	public double playerDistance;
-
+	
 	@Override
 	public void onEnable() {
 		myListener = new ECListener(this);
@@ -47,32 +40,18 @@ public class EntityControl extends JavaPlugin {
 		saveConfig();
 
 		// Assign all the local variables
-		spawnsAllowed = config.getInt("spawnsAllowed");
-		reportSize = config.getInt("reportSize");
+		deathBufferSeconds = config.getInt("deathBufferSeconds");
+		entityCountPerChunk = config.getInt("entityCountPerChunk");
 		pluginEnable = config.getBoolean("pluginEnable");
 		debug = config.getBoolean("debug");
-		oneTimeUse = config.getBoolean("oneTimeUse");
-		warnThreshold = config.getDouble("warnThreshold");
-		alertThreshold = config.getDouble("alertThreshold");
-		spawnerRadiusX = config.getInt("spawnerRadiusX");
-		spawnerRadiusY = config.getInt("spawnerRadiusY");
-		spawnerRadiusZ = config.getInt("spawnerRadiusZ");
-		playerDistance = config.getDouble("playerDistance");
 
 		final Logger log = getLogger();
 		log.info("Config loaded.");
 		if (debug) {
-			log.info("[spawnsAllowed: " + spawnsAllowed + "] ");
-			log.info("[reportSize: " + reportSize + "]");
+			log.info("[deathBufferSeconds: " + deathBufferSeconds + "] ");
+			log.info("[entityCountPerChunk: " + entityCountPerChunk + "] ");
 			log.info("[pluginEnable: " + String.valueOf(pluginEnable) + "]");
 			log.info("[debug: " + String.valueOf(debug) + "]");
-			log.info("[oneTimeUse: " + String.valueOf(oneTimeUse) + "]");
-			log.info("[warnThreshold: " + warnThreshold + "] ");
-			log.info("[alertThreshold: " + alertThreshold + "]");
-			log.info("[spawnerRadiusX: " + spawnerRadiusX + "]");
-			log.info("[spawnerRadiusY: " + spawnerRadiusY + "]");
-			log.info("[spawnerRadiusZ: " + spawnerRadiusZ + "]");
-			log.info("[playerDistance: " + playerDistance + "]");
 		}
 	}
 
@@ -81,34 +60,20 @@ public class EntityControl extends JavaPlugin {
 	 */
 	public void saveMainConfig() {
 
-		config.set("spawnsAllowed", spawnsAllowed);
-		config.set("reportSize", reportSize);
+		config.set("deathBufferSeconds", deathBufferSeconds);
+		config.set("entityCountPerChunk", entityCountPerChunk);
 		config.set("pluginEnable", pluginEnable);
 		config.set("debug", debug);
-		config.set("oneTimeUse", oneTimeUse);
-		config.set("warnThreshold", warnThreshold);
-		config.set("alertThreshold", alertThreshold);
-		config.set("spawnerRadiusX", spawnerRadiusX);
-		config.set("spawnerRadiusY", spawnerRadiusY);
-		config.set("spawnerRadiusZ", spawnerRadiusZ);
-		config.set("playerDistance", playerDistance);
 
 		saveConfig();
 
 		final Logger log = getLogger();
 		log.info("Config saved.");
 		if (debug) {
-			log.info("[spawnsAllowed: " + spawnsAllowed + "] ");
-			log.info("[reportSize: " + reportSize + "]");
+			log.info("[deathBufferSeconds: " + deathBufferSeconds + "] ");
+			log.info("[entityCountPerChunk: " + entityCountPerChunk + "] ");
 			log.info("[pluginEnable: " + String.valueOf(pluginEnable) + "]");
 			log.info("[debug: " + String.valueOf(debug) + "]");
-			log.info("[oneTimeUse: " + String.valueOf(oneTimeUse) + "]");
-			log.info("[warnThreshold: " + warnThreshold + "] ");
-			log.info("[alertThreshold: " + alertThreshold + "]");
-			log.info("[spawnerRadiusX: " + spawnerRadiusX + "]");
-			log.info("[spawnerRadiusY: " + spawnerRadiusY + "]");
-			log.info("[spawnerRadiusZ: " + spawnerRadiusZ + "]");
-			log.info("[playerDistance: " + playerDistance + "]");
 		}
 	}
 }

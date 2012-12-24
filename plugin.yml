@@ -15,10 +15,7 @@ permissions:
         description: Gives access to all EntityControl features
         children:
             ec.command: true
-            ec.stats: true
             ec.go: true
-            ec.tp: true
-            ec.resetstats: true
             ec.debug: true
             ec.reload: true
             ec.toggle: true
@@ -27,15 +24,6 @@ permissions:
         default: op
     ec.go:
         description: Allows players access to GO command
-        default: op
-    ec.stats:
-        description: Allows players access to STATS command
-        default: op
-    ec.tp:
-        description: Allows players access to TP command
-        default: op
-    ec.resetstats:
-        description: Allows players access to RESETSTATS command
         default: op
     ec.debug:
         description: Enables EC debugging

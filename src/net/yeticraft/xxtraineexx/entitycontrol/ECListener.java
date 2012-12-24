@@ -28,18 +28,6 @@ public class ECListener implements Listener {
 		Chunk chunk = e.getEntity().getLocation().getChunk();
 		playerDeaths.put(chunk.toString(), System.currentTimeMillis());
 		
-		Iterator<Map.Entry<String,Long>> iter = playerDeaths.entrySet().iterator();
-		while (iter.hasNext()) {
-		    Map.Entry<String,Long> entry = iter.next();
-		    if((entry.getValue() - System.currentTimeMillis()) > 300000){
-		    	
-		    	if (plugin.debug) {
-					plugin.getLogger().info("Removed death entry from: " + entry.getKey());
-					plugin.getLogger().info("Entry was [" + (entry.getValue() / 1000) + "] seconds old.");
-				}
-		    	iter.remove();
-		    }
-		}
 	}
 
 }
