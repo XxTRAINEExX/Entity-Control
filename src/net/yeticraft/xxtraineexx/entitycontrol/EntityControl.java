@@ -1,6 +1,8 @@
 package net.yeticraft.xxtraineexx.entitycontrol;
 
 import java.util.logging.Logger;
+
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +22,7 @@ public class EntityControl extends JavaPlugin {
 	public int entityCountPerChunk;
 	public boolean pluginEnable;
 	public boolean debug;
+	public int scheduledJob;
 	
 	@Override
 	public void onEnable() {
@@ -28,6 +31,7 @@ public class EntityControl extends JavaPlugin {
 		CommandExecutor ECCommandExecutor = new ECCommand(this);
 		getCommand("entitycontrol").setExecutor(ECCommandExecutor);
 		getCommand("ec").setExecutor(ECCommandExecutor);
+		setupJob();
 	}
 
 	/**
@@ -75,5 +79,14 @@ public class EntityControl extends JavaPlugin {
 			log.info("[pluginEnable: " + String.valueOf(pluginEnable) + "]");
 			log.info("[debug: " + String.valueOf(debug) + "]");
 		}
+	}
+	
+	public void setupJob(){
+		scheduledJob = this.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+		    @Override  
+		    public void run() {
+		    	Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),"ec go");
+		    }
+		}, 60L, 200L);
 	}
 }
