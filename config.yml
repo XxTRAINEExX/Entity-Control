@@ -1,4 +1,5 @@
 deathBufferSeconds: 300.0
 entityCountPerChunk: 100
+cleanupTimer: 200.0
 pluginEnable: true
 debug: false

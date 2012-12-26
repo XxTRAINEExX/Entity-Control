@@ -1,15 +1,9 @@
 package net.yeticraft.xxtraineexx.entitycontrol;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
 
 /**
  * @author XxTRAINEExX
@@ -105,7 +99,7 @@ public class ECCommand implements CommandExecutor {
 					return true;
 				}
 
-				cleanChunks(sender);								
+				plugin.cleanChunks(sender);								
 				break;
 
 				
@@ -199,60 +193,4 @@ public class ECCommand implements CommandExecutor {
 		return true;
 	}
 	
-	public void cleanChunks(CommandSender sender){
-		// Check current playerDeaths MAP and remove any old entries
-		Iterator<Map.Entry<String,Long>> iter = plugin.myListener.playerDeaths.entrySet().iterator();
-		while (iter.hasNext()) {
-			Map.Entry<String,Long> entry = iter.next();
-			long deathTime = entry.getValue();
-			String deathChunk = entry.getKey();
-			if((System.currentTimeMillis() - deathTime) > (plugin.deathBufferSeconds * 1000.0)){
-				if (plugin.debug) {plugin.getLogger().info("Removed player death from: " + deathChunk + ". Player died [" + ((System.currentTimeMillis() - deathTime) / 1000.0) + "] seconds ago.");}
-				iter.remove();
-				continue;
-			}
-			if (plugin.debug) {plugin.getLogger().info("Death in: " + deathChunk + " kept. Player died [" + ((System.currentTimeMillis() - deathTime) / 1000.0) + "] seconds ago.");}
-		}
-
-	
-		// Cycling through all worlds
-		for (World world : plugin.getServer().getWorlds()) { 
-		
-			// Cycling through all loaded chunks in at particular world
-			for (Chunk chunk : world.getLoadedChunks()) { 
-			
-				int clearedEntities = 0;
-				int keptEntities = 0;
-				String currentChunk = world.toString() + "-" + chunk.toString();
-				Entity[] entityList = chunk.getEntities();
-			
-				// Doing some work if the entity count in that chunk is too high
-				if (entityList.length < plugin.entityCountPerChunk) {
-					continue;
-				}
-				if (plugin.myListener.playerDeaths.get(currentChunk) != null) {
-					long deathInChunk = plugin.myListener.playerDeaths.get(currentChunk);
-					if (plugin.debug){plugin.getLogger().info(currentChunk + 
-							" has a death logged [" + ((System.currentTimeMillis() - deathInChunk)/1000.0) + "] seconds ago.  Skipping because it happened < " + plugin.deathBufferSeconds + " seconds ago.");}
-					continue;
-				}
-				// Cycling through all entities in the list
-				for (Entity entity : entityList){
-				
-					// If it's not alive I'm going to remove it.
-					if (!entity.getType().isAlive()){
-						entity.remove();
-						clearedEntities++;
-						continue;
-					}
-					if (plugin.debug){plugin.getLogger().info("Chunk: " + world.toString() + "-" + chunk.toString() + 
-							" Entity: " + entity.toString() + " is alive.  Skipping.");}
-					keptEntities++;               
-				}
-				sender.sendMessage(ChatColor.DARK_AQUA +  world.toString() + " - " + chunk.toString() + ": Entities Cleared [" + clearedEntities + "]");
-				sender.sendMessage(ChatColor.DARK_AQUA +  world.toString() + " - " + chunk.toString() + ": Entities Kept [" + keptEntities + "]");
-			}
-		} 	
-		sender.sendMessage(ChatColor.DARK_AQUA +  "Chunk cleanup complete.");
-	}
 }
